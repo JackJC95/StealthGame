@@ -5,6 +5,7 @@
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
 #include "FPSGameMode.h"
+#include "AI/Navigation/NavigationSystem.h"
 
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
@@ -27,6 +28,11 @@ void AFPSAIGuard::BeginPlay()
 	PawnSensingComp->OnHearNoise.AddDynamic(this, &AFPSAIGuard::OnNoiseHeard);
 
 	OriginalRotation = GetActorRotation();
+
+	if (bPatrol)
+	{
+		MoveToNextPatrolPoint();
+	}
 }
 
 void AFPSAIGuard::OnPawnSeen(APawn * SeenPawn)
@@ -45,6 +51,12 @@ void AFPSAIGuard::OnPawnSeen(APawn * SeenPawn)
 	}
 
 	SetGuardState(EAIState::Alerted);
+
+	AController* Controller = GetController();
+	if (Controller)
+	{
+		Controller->StopMovement();
+	}
 }
 
 void AFPSAIGuard::OnNoiseHeard(APawn* NoiseInstigator, const FVector & Location, float Volume)
@@ -69,6 +81,12 @@ void AFPSAIGuard::OnNoiseHeard(APawn* NoiseInstigator, const FVector & Location,
 	GetWorldTimerManager().SetTimer(TimerHandle_ResetOrientation, this, &AFPSAIGuard::ResetOrientation, 3.0f);
 
 	SetGuardState(EAIState::Suspicious);
+
+	AController* Controller = GetController();
+	if (Controller)
+	{
+		Controller->StopMovement();
+	}
 }
 
 void AFPSAIGuard::ResetOrientation()
@@ -81,6 +99,11 @@ void AFPSAIGuard::ResetOrientation()
 	SetActorRotation(OriginalRotation);
 
 	SetGuardState(EAIState::Idle);
+
+	if (bPatrol)
+	{
+		MoveToNextPatrolPoint();
+	}
 }
 
 void AFPSAIGuard::SetGuardState(EAIState NewState)
@@ -100,4 +123,29 @@ void AFPSAIGuard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (CurrentPatrolPoint)
+	{
+		FVector Delta = GetActorLocation() - CurrentPatrolPoint->GetActorLocation();
+		float DistanceToGoal = Delta.Size();
+
+		if (DistanceToGoal < 100)
+		{
+			MoveToNextPatrolPoint();
+		}
+	}
+
+}
+
+void AFPSAIGuard::MoveToNextPatrolPoint()
+{
+	if (CurrentPatrolPoint == nullptr || CurrentPatrolPoint == SecondPatrolPoint)
+	{
+		CurrentPatrolPoint = FirstPatrolPoint;
+	}
+	else
+	{
+		CurrentPatrolPoint = SecondPatrolPoint;
+	}
+
+	UNavigationSystem::SimpleMoveToActor(GetController(), CurrentPatrolPoint);
 }

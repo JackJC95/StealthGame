@@ -55,4 +55,19 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+protected:
+
+	UPROPERTY(EditInstanceOnly, Category = "AI")
+	bool bPatrol;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI", meta = (EditCondition = "bPatrol"))
+	AActor* FirstPatrolPoint;
+
+	UPROPERTY(EditInstanceOnly, Category = "AI", meta = (EditCondition = "bPatrol"))
+	AActor* SecondPatrolPoint;
+
+	AActor* CurrentPatrolPoint;
+
+	void MoveToNextPatrolPoint();
 };
