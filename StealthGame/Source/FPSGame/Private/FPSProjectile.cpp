@@ -3,6 +3,7 @@
 #include "FPSProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
+#include "GameFramework/Actor.h"
 
 AFPSProjectile::AFPSProjectile() 
 {
@@ -37,8 +38,10 @@ void AFPSProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPr
 	// Only add impulse and destroy projectile if we hit a physics
 	if ((OtherActor != NULL) && (OtherActor != this) && (OtherComp != NULL) && OtherComp->IsSimulatingPhysics())
 	{
-		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
-
-		Destroy();
+		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());		
 	}
+
+	MakeNoise(1.0f, Instigator);
+
+	Destroy();
 }
